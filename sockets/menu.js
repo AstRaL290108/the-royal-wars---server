@@ -6,10 +6,22 @@ const cfg = require('../config.js');
 var func_list = [];
 
 func_list.push({
-	event: "search",
+	event: "load-rooms",
 
 	func: (socket, data) => {
-		
+		db.select_all("rooms", (err, rooms, field) => {
+			socket.join("search");
+			for (let i = 0; i < rooms.length; i++) {
+				let room = rooms[i];
+				
+				if (room.state != "wait") return;
+				socket.emit("get-room", {
+					id: room.id,
+					title: room.title,
+					player_ammount: room.player_ammount
+				});
+			}
+		});
 	}
 });
 
@@ -33,8 +45,14 @@ func_list.push({
 			db.select({table: "rooms", title: data.title}, (err, rooms, field) => {
 				for (let i = 0; i < rooms.length; i++) {
 					let item = rooms[i];
-					if (attraction.creater == item.attraction.creater)
+					if (attraction.creater == item.attraction.creater) {
+						io.to("search").emit("get-room", {
+							id: item.id,
+							title: data.title,
+							player_ammount: item.player_ammount
+						});
 						socket.emit("room-was-created", {room: item.id});
+					}
 				}
 			});
 		});

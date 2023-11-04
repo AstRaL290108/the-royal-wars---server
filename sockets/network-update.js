@@ -21,7 +21,14 @@ func_list.push({
 			let new_playes_list = String(room.players_list).replace("undefined", "") + "&" + player.id;
 
 			io.to(`room-${room.id}`).emit("get-player-ammount", {players_ammount: new_player_ammount});
+			socket.leave("search");
 			socket.join(`room-${room.id}`);
+
+			io.to("search").emit("update-rooms", {
+				id: room.id,
+				player_ammount: new_player_ammount,
+				type: "update"
+			});
 
 			db.updata({
 				table: 'rooms',
@@ -64,8 +71,11 @@ func_list.push({
 			let new_playes_list = room.players_list.replace("&" + player.id, "");
 
 			io.to(`room-${room.id}`).emit("get-player-ammount", {players_ammount: new_player_ammount});
+			io.to("search").emit("update-rooms", {id: room.id, player_ammount: new_player_ammount, type: "update"});
 			
 			if (player_ammount[0] == 0) {
+				io.to("search").emit("update-rooms", {id: room.id, type: "delete"});
+
 				db.delete({
 					table: "rooms",
 					id: room.id
